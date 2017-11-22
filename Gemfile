@@ -20,6 +20,7 @@ gem 'jquery-rails'
 gem 'turbolinks'
 gem 'bootstrap'
 gem 'figaro'
+gem 'active_model_serializers', '~> 0.10.0'
 
 
 group :development, :test do
