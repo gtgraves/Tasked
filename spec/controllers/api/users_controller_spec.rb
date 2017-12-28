@@ -1,14 +1,14 @@
 require 'rails_helper'
 
 RSpec.describe Api::UsersController, type: :controller do
-  before do
-    @auth_user = create(:user, username: "testuser", password: "testpass")
-  end
+  let (:existing_user) { create(:user) }
 
   context "authorized user" do
-    before(:each) do
-      user = "testuser"
-      pw = "testpass"
+    let (:user) { "testuser" }
+    let (:pw) { "testpass" }
+
+    before do
+      @auth_user = create(:user, username: user, password: pw, email: "test@email.com")
       request.env['HTTP_AUTHORIZATION'] = ActionController::HttpAuthentication::Basic.encode_credentials(user,pw)
     end
 
@@ -25,7 +25,7 @@ RSpec.describe Api::UsersController, type: :controller do
     end
 
     describe "POST create" do
-      it "increases the number of topics by 1" do
+      it "increases the number of users by 1" do
         expect{ post :create, user: {name: "Test User", email: "test@test.com", username: "testuser2", password: "password" } }.to change(User,:count).by(1)
       end
 
@@ -49,6 +49,20 @@ RSpec.describe Api::UsersController, type: :controller do
         expect(response.status).to eq 422
       end
     end
+
+    describe "DELETE destroy" do
+      it "deletes the user" do
+        delete :destroy, {id: existing_user.id}
+        count = List.where({id: existing_user.id}).size
+        expect(count).to eq 0
+      end
+
+      it "returns 204 status" do
+        delete :destroy, {id: existing_user.id}
+        expect(response.status).to eq 204
+      end
+    end
+
   end
 
   context "unauthorized user" do
@@ -68,6 +82,13 @@ RSpec.describe Api::UsersController, type: :controller do
     describe "POST create" do
       it "returns 401 error" do
         post :create, user: {name: "Test User", email: "test@test.com", username: "testuser2", password: "password" }
+        expect(response.status).to eq 401
+      end
+    end
+
+    describe "DELETE destroy" do
+      it "returns 401 error" do
+        delete :destroy, {id: existing_user.id}
         expect(response.status).to eq 401
       end
     end
