@@ -1,6 +1,10 @@
 require 'rails_helper'
 
 RSpec.describe Api::ItemsController, type: :controller do
+  let(:my_user) { create(:user) }
+  let(:my_list) { create(:list, user: my_user) }
+  let(:my_item) { create(:item, list: my_list) }
+
   context "authorized user" do
     let (:user) { "testuser" }
     let (:pw) { "testpass" }
@@ -11,9 +15,6 @@ RSpec.describe Api::ItemsController, type: :controller do
     end
 
     describe "POST create" do
-      let(:my_user) { create(:user) }
-      let(:my_list) { create(:list, user: my_user) }
-
       it "returns http success" do
         post :create, list_id: my_list.id, item: {body: "Wash the Dog"}
         expect(response).to have_http_status(:success)
@@ -33,6 +34,23 @@ RSpec.describe Api::ItemsController, type: :controller do
         expect(response.status).to eq 422
       end
     end
+
+    describe "PUT update" do
+      it "returns http success" do
+        new_completed = true
+        put :update, list_id: my_list.id, id: my_item.id, item: {completed: new_completed}
+        expect(response).to have_http_status(:success)
+      end
+
+      it "updates item with expected attributes" do
+        new_completed = true
+        put :update, list_id: my_list.id, id: my_item.id, item: {completed: new_completed}
+
+        updated_item = assigns(:item)
+        expect(updated_item.id).to eq my_item.id
+        expect(updated_item.completed).to eq true
+      end
+    end
   end
 
   context "unauthorized user" do
@@ -42,12 +60,17 @@ RSpec.describe Api::ItemsController, type: :controller do
       request.env['HTTP_AUTHORIZATION'] = ActionController::HttpAuthentication::Basic.encode_credentials(user,pw)
     end
 
-    describe "Post create" do
-      let(:my_user) { create(:user) }
-      let(:my_list) { create(:list, user: my_user) }
-
+    describe "POST create" do
       it "returns 401 error" do
         post :create, list_id: my_list.id, item: {body: "Wash the Dog"}
+        expect(response.status).to eq 401
+      end
+    end
+
+    describe "PUT update" do
+      it "returns 401 error" do
+        new_completed = true
+        put :update, list_id: my_list.id, id: my_item.id, item: {completed: new_completed}
         expect(response.status).to eq 401
       end
     end
