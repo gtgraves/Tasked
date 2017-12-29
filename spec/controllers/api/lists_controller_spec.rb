@@ -1,19 +1,18 @@
 require 'rails_helper'
 
 RSpec.describe Api::ListsController, type: :controller do
-  before do
-    @auth_user = create(:user, username: "testuser", password: "testpass", email: "test@email.com")
-  end
-
   context "authorized user" do
-    before(:each) do
-      user = "testuser"
-      pw = "testpass"
+    let (:user) { "testuser" }
+    let (:pw) { "testpass" }
+    let(:my_user) { create(:user) }
+    let(:existing_list) { create(:list, user: my_user) }
+
+    before do
+      @auth_user = create(:user, username: user, password: pw, email: "test@email.com")
       request.env['HTTP_AUTHORIZATION'] = ActionController::HttpAuthentication::Basic.encode_credentials(user,pw)
     end
 
     describe "POST create" do
-      let(:my_user) { create(:user) }
 
       it "returns http success" do
         post :create, user_id: my_user.id, list: {title: "All of My Todos" }
@@ -34,9 +33,25 @@ RSpec.describe Api::ListsController, type: :controller do
         expect(response.status).to eq 422
       end
     end
+
+    describe "DELETE destroy" do
+      it "deletes the list" do
+        delete :destroy, user_id: my_user.id, id: existing_list.id
+        count = Item.where({id: existing_list.id}).size
+        expect(count).to eq 0
+      end
+
+      it "returns 204 status" do
+        delete :destroy, user_id: my_user.id, id: existing_list.id
+        expect(response.status).to eq 204
+      end
+    end
   end
 
-  context "unauthoirzed user" do
+  context "unauthorized user" do
+    let(:my_user) { create(:user) }
+    let(:existing_list) { create(:list, user: my_user) }
+
     before(:each) do
       user = "testuser"
       pw = "wrongpass"
@@ -48,6 +63,13 @@ RSpec.describe Api::ListsController, type: :controller do
 
       it "returns 401 error" do
         post :create, user_id: my_user.id, list: {title: "All of My Todos" }
+        expect(response.status).to eq 401
+      end
+    end
+
+    describe "DELETE destroy" do
+      it "returns 401 error" do
+        delete :destroy, user_id: my_user.id, id: existing_list.id
         expect(response.status).to eq 401
       end
     end

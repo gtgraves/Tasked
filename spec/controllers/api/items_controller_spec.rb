@@ -1,14 +1,12 @@
 require 'rails_helper'
 
 RSpec.describe Api::ItemsController, type: :controller do
-  before do
-    @auth_user = create(:user, username: "testuser", password: "testpass", email: "test@email.com")
-  end
-
   context "authorized user" do
-    before(:each) do
-      user = "testuser"
-      pw = "testpass"
+    let (:user) { "testuser" }
+    let (:pw) { "testpass" }
+
+    before do
+      @auth_user = create(:user, username: user, password: pw, email: "test@email.com")
       request.env['HTTP_AUTHORIZATION'] = ActionController::HttpAuthentication::Basic.encode_credentials(user,pw)
     end
 
@@ -38,7 +36,7 @@ RSpec.describe Api::ItemsController, type: :controller do
   end
 
   context "unauthorized user" do
-    before(:each) do
+    before do
       user = "testuser"
       pw = "wrongpass"
       request.env['HTTP_AUTHORIZATION'] = ActionController::HttpAuthentication::Basic.encode_credentials(user,pw)
