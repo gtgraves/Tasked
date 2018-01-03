@@ -34,6 +34,23 @@ RSpec.describe Api::ListsController, type: :controller do
       end
     end
 
+    describe "PUT update" do
+      it "returns http success" do
+        new_private = true
+        put :update, user_id: my_user.id, id: existing_list.id, list: {private: new_private}
+        expect(response).to have_http_status(:success)
+      end
+
+      it "updates list with expected attributes" do
+        new_private = true
+        put :update, user_id: my_user.id, id: existing_list.id, list: {private: new_private}
+
+        updated_list = assigns(:list)
+        expect(updated_list.id).to eq existing_list.id
+        expect(updated_list.private).to eq true
+      end
+    end
+
     describe "DELETE destroy" do
       it "deletes the list" do
         delete :destroy, user_id: my_user.id, id: existing_list.id
@@ -63,6 +80,14 @@ RSpec.describe Api::ListsController, type: :controller do
 
       it "returns 401 error" do
         post :create, user_id: my_user.id, list: {title: "All of My Todos" }
+        expect(response.status).to eq 401
+      end
+    end
+
+    describe "PUT update" do
+      it "returns 401 error" do
+        new_private = true
+        put :update, user_id: my_user.id, id: existing_list.id, list: {private: new_private}
         expect(response.status).to eq 401
       end
     end
